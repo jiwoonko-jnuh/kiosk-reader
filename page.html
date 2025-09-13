@@ -1,0 +1,288 @@
+<html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>음성 인식 키오스크 – 데모</title>
+    <style>
+      :root { --bg:#0b1220; --panel:#101a2e; --accent:#6aa7ff; --text:#e9eefb; --muted:#9fb0d8; --ok:#2ecc71; --warn:#ffb020; --err:#ff6b6b; }
+      *{box-sizing:border-box}
+      body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, Arial, sans-serif; background:linear-gradient(180deg, #0a0f1c, #0b1220 35%, #0b1220); color:var(--text)}
+      .container{max-width:1050px; margin:32px auto; padding:16px}
+      .grid{display:grid; grid-template-columns: 360px 1fr; gap:20px}
+      .card{background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      .card h2{margin:0; padding:16px 18px; font-size:18px; border-bottom:1px solid rgba(255,255,255,.06); color:#cfe2ff}
+      .card .content{padding:16px 18px}
+      .menu{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px}
+      .menu .item{border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; cursor:pointer; transition:.2s transform, .2s border-color}
+      .menu .item:hover{transform:translateY(-2px); border-color:var(--accent)}
+      .item .name{font-weight:700}
+      .item .desc{font-size:12px; color:var(--muted)}
+      .toolbar{display:flex; gap:12px; flex-wrap:wrap}
+      button{all:unset; display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0e1730; cursor:pointer; transition:.15s transform, .2s border-color}
+      button:hover{transform:translateY(-1px); border-color:var(--accent)}
+      button.primary{background:linear-gradient(180deg, #1b4bff, #306dff); border-color:transparent}
+      button.danger{background:linear-gradient(180deg, #ff4b4b, #ff6b6b)}
+      .status{font-size:13px; color:var(--muted)}
+      .status.ok{color:var(--ok)}
+      .status.warn{color:var(--warn)}
+      .status.err{color:var(--err)}
+      .asr-box{min-height:72px; border:1px dashed rgba(255,255,255,.2); border-radius:12px; padding:10px 12px; background:#0d172b}
+      .asr-box .label{font-size:12px; color:var(--muted)}
+      .asr-box .text{font-size:16px; margin-top:4px; min-height:24px}
+      table{width:100%; border-collapse:collapse}
+      th, td{padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.08)}
+      th{color:#c9dcff; text-align:left; font-weight:600; font-size:13px}
+      tfoot td{border-top:1px solid rgba(255,255,255,.2); font-weight:700}
+      .pill{display:inline-block; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,.08); font-size:12px; color:#cfe2ff}
+      .hint{font-size:12px; color:var(--muted)}
+      .footer{margin-top:12px; font-size:12px; color:var(--muted)}
+      .big{font-size:40px; line-height:1}
+      .center{display:flex; align-items:center; gap:12px}
+      .sr-only{position:absolute; left:-10000px}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="card">
+        <div class="content" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div>
+            <div class="pill">Demo</div>
+            <h1 style="margin:6px 0 4px; font-size:28px;">음성 인식 키오스크</h1>
+            <div class="hint">"아이스 아메리카노 두 잔", "따뜻한 라떼 하나", "주문 완료" 처럼 말해보세요.</div>
+          </div>
+          <div class="center">
+            <button id="btnStart" class="primary" aria-pressed="false">🎙️ 인식 시작</button>
+            <button id="btnStop">⏹️ 인식 정지</button>
+            <button id="btnClear" class="danger">🧹 초기화</button>
+          </div>
+        </div>
+      </header>
+  
+      <div class="grid" style="margin-top:18px;">
+        <section class="card">
+          <h2>메뉴</h2>
+          <div class="content">
+            <div class="menu" id="menu"><div class="item"><div class="name">아메리카노</div><div class="desc">3,000원 · 커피, 기본</div></div><div class="item"><div class="name">라떼</div><div class="desc">3,800원 · 커피, 우유</div></div><div class="item"><div class="name">카푸치노</div><div class="desc">4,000원 · 커피</div></div><div class="item"><div class="name">모카</div><div class="desc">4,200원 · 초코</div></div><div class="item"><div class="name">녹차</div><div class="desc">3,500원 · 티</div></div><div class="item"><div class="name">아이스티</div><div class="desc">3,200원 · 티, 시원</div></div></div>
+            <div class="footer">탭해서 장바구니에 담을 수도 있어요.</div>
+          </div>
+        </section>
+  
+        <section class="card">
+          <h2>음성 인식 &amp; 상태</h2>
+          <div class="content">
+            <div class="asr-box" aria-live="polite">
+              <div class="label">실시간 인식결과</div>
+              <div id="asrText" class="text"></div>
+            </div>
+            <div id="asrStatus" class="status " style="margin-top:8px;">마이크 권한을 허용하면 시작할 수 있어요. "인식 시작"을 눌러주세요.</div>
+            <div style="margin-top:12px" class="hint">
+              • 키워드: 아이스/뜨거운, 스몰/미디엄/라지, 개수(하나·둘·셋 / 1·2·3).<br>
+              • 제어: "취소"(최근 항목 삭제), "다시"(전체 비우기), "주문 완료"(확정).
+            </div>
+          </div>
+        </section>
+      </div>
+  
+      <section class="card" style="margin-top:18px;">
+        <h2>장바구니</h2>
+        <div class="content">
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>메뉴</th><th>옵션</th><th>수량</th><th>가격</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="cartBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" style="text-align:right">합계</td>
+                  <td id="sumCell">0원</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="toolbar" style="margin-top:12px;justify-content:flex-end;">
+            <button id="btnCheckout" class="primary">✅ 주문 완료</button>
+          </div>
+          <div id="checkoutMsg" class="status" style="margin-top:8px"></div>
+        </div>
+      </section>
+  
+      <footer class="container" style="opacity:.7; text-align:center;">
+        <div class="footer">브라우저는 Chrome(안드로이드/데스크톱)에서 가장 잘 동작합니다. iOS Safari는 제한이 있을 수 있습니다.</div>
+      </footer>
+    </div>
+  
+    <script>
+      /********************** 메뉴 구성 *************************/
+      const MENU = [
+        { id:'americano', name:'아메리카노', price: 3000, tags:['커피','기본'] },
+        { id:'latte', name:'라떼', price: 3800, tags:['커피','우유'] },
+        { id:'cappuccino', name:'카푸치노', price: 4000, tags:['커피'] },
+        { id:'mocha', name:'모카', price: 4200, tags:['초코'] },
+        { id:'greentea', name:'녹차', price: 3500, tags:['티'] },
+        { id:'icetea', name:'아이스티', price: 3200, tags:['티','시원'] },
+      ];
+  
+      const SIZES = ['스몰','미디엄','라지'];
+      const TEMPS = ['아이스','뜨거운','따뜻한','핫','차가운','ice','hot'];
+  
+      const numberWords = {
+        '한잔':'1','한 개':'1','하나':'1','한':'1','두잔':'2','두 개':'2','둘':'2','두':'2','세잔':'3','세 개':'3','셋':'3','세':'3','네':'4','다섯':'5','여섯':'6','일곱':'7','여덟':'8','아홉':'9','열':'10'
+      };
+  
+      function renderMenu(){
+        const box = document.getElementById('menu');
+        box.innerHTML = '';
+        MENU.forEach(m => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `<div class="name">${m.name}</div><div class="desc">${m.price.toLocaleString()}원 · ${m.tags.join(', ')}</div>`;
+          div.addEventListener('click', () => addToCart({name:m.name, qty:1, size:'미디엄', temp:'아이스', price:m.price}));
+          box.appendChild(div);
+        });
+      }
+  
+      /********************** 장바구니 *************************/
+      let cart = [];
+  
+      function addToCart(item){
+        cart.push(item); renderCart(); speak(`${item.temp||''} ${item.size||''} ${item.name} ${item.qty}개 담았어요`.replace(/\s+/g,' ').trim());
+      }
+  
+      function removeFromCart(idx){ cart.splice(idx,1); renderCart(); }
+  
+      function clearCart(){ cart = []; renderCart(); }
+  
+      function renderCart(){
+        const body = document.getElementById('cartBody');
+        body.innerHTML = '';
+        let sum = 0;
+        cart.forEach((c, i) => {
+          const tr = document.createElement('tr');
+          const price = c.price * c.qty; sum += price;
+          tr.innerHTML = `
+            <td>${c.name}</td>
+            <td>${(c.temp||'') + ' ' + (c.size||'')}</td>
+            <td>${c.qty}</td>
+            <td>${price.toLocaleString()}원</td>
+            <td><button aria-label="삭제" onclick="removeFromCart(${i})">삭제</button></td>`;
+          body.appendChild(tr);
+        });
+        document.getElementById('sumCell').textContent = sum.toLocaleString() + '원';
+      }
+  
+      /********************** 음성합성 *************************/
+      function speak(text){
+        try{
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ko-KR';
+          u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+        }catch(e){ /* no-op */ }
+      }
+  
+      /********************** 음성인식 *************************/
+      const asrText = document.getElementById('asrText');
+      const asrStatus = document.getElementById('asrStatus');
+  
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let rec = null; let listening = false; let interim = '';
+  
+      function updateStatus(msg, cls=''){
+        asrStatus.textContent = msg; asrStatus.className = 'status ' + cls;
+      }
+  
+      function parseAndApply(text){
+        const norm = text.replace(/\s+/g,'').toLowerCase();
+  
+        // 제어 명령
+        if(/(주문완료|결제|확정)/.test(norm)) { checkout(); return; }
+        if(/(다시|초기화|비우)/.test(norm)) { clearCart(); speak('장바구니를 비웠어요'); return; }
+        if(/(취소|지워|삭제)/.test(norm)) { if(cart.length){ cart.pop(); renderCart(); speak('마지막 항목을 지웠어요'); } return; }
+  
+        // 수량
+        let qtyMatch = text.match(/(\d+|한잔|한 개|하나|한|두잔|두 개|둘|두|세잔|세 개|셋|세|네|다섯|여섯|일곱|여덟|아홉|열)/);
+        let qty = 1;
+        if(qtyMatch){
+          const q = qtyMatch[1];
+          qty = isNaN(Number(q)) ? Number(numberWords[q] || '1') : Number(q);
+          if(qty <= 0) qty = 1; if(qty > 20) qty = 20;
+        }
+  
+        // 사이즈 & 온도
+        let size = SIZES.find(s => text.includes(s)) || '미디엄';
+        let temp = null;
+        if(/(아이스|ice|차갑)/i.test(text)) temp = '아이스';
+        else if(/(뜨거운|따뜻|핫|hot)/i.test(text)) temp = '뜨거운';
+  
+        // 메뉴명
+        const found = MENU.find(m => text.includes(m.name));
+        if(found){
+          addToCart({ name: found.name, qty, size, temp: temp || '아이스', price: found.price });
+          return;
+        }
+  
+        // 모호한 경우 간단 피드백
+        updateStatus('메뉴를 못 알아들었어요. 다시 말씀해 주세요 (예: 아이스 아메리카노 두 잔).', 'warn');
+        speak('메뉴를 다시 말씀해 주세요. 예, 아이스 아메리카노 두 잔');
+      }
+  
+      function setupASR(){
+        if(!SR){ updateStatus('이 브라우저는 음성인식을 지원하지 않습니다.', 'err'); return; }
+        rec = new SR();
+        rec.lang = 'ko-KR';
+        rec.continuous = true; // 연속 인식
+        rec.interimResults = true; // 중간 결과
+  
+        rec.onstart = () => { listening = true; updateStatus('인식 중… 평소 말하듯 말씀하세요.', 'ok'); document.getElementById('btnStart').setAttribute('aria-pressed','true'); };
+        rec.onerror = (e) => { updateStatus('오류: ' + e.error, 'err'); };
+        rec.onend = () => {
+          listening = false; document.getElementById('btnStart').setAttribute('aria-pressed','false');
+          updateStatus('인식이 중지되었습니다. 다시 시작하려면 버튼을 누르세요.', '');
+        };
+  
+        rec.onresult = (ev) => {
+          let finalText = '';
+          interim = '';
+          for(let i = ev.resultIndex; i < ev.results.length; i++){
+            const r = ev.results[i];
+            if(r.isFinal) finalText += r[0].transcript;
+            else interim += r[0].transcript;
+          }
+          asrText.textContent = (finalText || interim).trim();
+          if(finalText){
+            parseAndApply(finalText.trim());
+          }
+        };
+      }
+  
+      function startASR(){ if(!rec){ setupASR(); } try{ rec && rec.start(); }catch(e){ /* ignore */ } }
+      function stopASR(){ try{ rec && rec.stop(); }catch(e){ /* ignore */ } }
+  
+      /********************** 주문 완료 *************************/
+      function checkout(){
+        if(!cart.length){ updateStatus('장바구니가 비어 있어요.', 'warn'); speak('장바구니가 비어 있어요'); return; }
+        const sum = cart.reduce((a,c)=>a+c.price*c.qty,0);
+        const msg = `총 ${sum.toLocaleString()}원입니다. 결제하시겠어요?`;
+        document.getElementById('checkoutMsg').textContent = msg;
+        updateStatus('주문이 준비되었습니다. 결제를 진행하세요.', 'ok');
+        speak(msg);
+      }
+  
+      /********************** 이벤트 바인딩 *************************/
+      document.getElementById('btnStart').addEventListener('click', startASR);
+      document.getElementById('btnStop').addEventListener('click', stopASR);
+      document.getElementById('btnClear').addEventListener('click', () => { clearCart(); speak('초기화했습니다'); });
+      document.getElementById('btnCheckout').addEventListener('click', checkout);
+  
+      // 초기 렌더
+      renderMenu();
+      setupASR();
+      updateStatus('마이크 권한을 허용하면 시작할 수 있어요. "인식 시작"을 눌러주세요.');
+    </script>
+  
+  
+  </body></html>
