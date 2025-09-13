@@ -8,3 +8,11 @@
 장바구니 담기 누르면 다시 말씀해주세요 출력됨
 
 jinja2.exceptions.UndefinedError: 'item' is undefined
+
+Uncaught TypeError: Cannot read properties of null (reading 'submit')
+    at recognition.onresult (cart:114:65)
+
+    인식된 음성: 결제
+cart:124 Uncaught TypeError: Cannot read properties of null (reading 'submit')
+    at recognition.onresult (cart:124:65)
+recognition.onresult @ cart:124Understand this error
