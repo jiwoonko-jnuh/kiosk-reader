@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 완료</title>
+</head>
+<body>
+    {% if cart and cart|length > 0 %}
+        {% for item in cart %}
+        <h2>주문 내역</h2>
+        <div class="cart-item">
+            <span>{{ item.name }} ({{ item.price }}원)</span>
+        </div>
+        {% endfor %}
+        <p>총액: {{ cart|sum(attribute='price') }}원</p>
+        <br>
+        <h3>결제가 완료되었습니다.</h3>
+        <script>
+            const msg = new SpeechSynthesisUtterance('결제가 완료되었습니다. 감사합니다.');
+            msg.lang = 'ko-KR';
+            window.speechSynthesis.speak(msg);
+        </script>
+    {% else %}
+        <p>장바구니가 비어 있습니다.</p>
+    {% endif %}
+</body>
+</html>

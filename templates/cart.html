@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>장바구니</title>
+    <style>
+        body { font-size: 1.2em; }
+        .cart-item { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>장바구니</h1>
+    <div id="cart-list">
+        {% if cart and cart|length > 0 %}
+            {% for item in cart %}
+            <div class="cart-item">
+                <span>{{ item.name }} ({{ item.price }}원)</span>
+            </div>
+            {% endfor %}
+            <p>총액: {{ cart|sum(attribute='price') }}원</p>
+            <form id="checkout-form" method="post" action="/checkout">
+                <button type="submit">결제하기</button>
+            </form>
+        {% else %}
+            <p>장바구니가 비어 있습니다.</p>
+        {% endif %}
+    </div>
+    <a href="/">메뉴로 돌아가기</a>
+</body>
+</html>

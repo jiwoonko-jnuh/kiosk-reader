@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>키오스크 메뉴</title>
+    <style>
+        body { font-size: 1.2em; }
+        .menu-item { margin: 10px 0; }
+        .cart-btn, .voice-btn { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>메뉴</h1>
+    <div id="menu-list">
+        {% for item in menu %}
+        <div class="menu-item">
+            <span>{{ item.name }} ({{ item.price }}원)</span>
+            <button class="cart-btn" onclick="addToCart('{{ item.id }}')">장바구니 담기</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="voice-btn" onclick="startVoiceRecognition()">음성인식으로 메뉴 추가</button>
+    <br><br>
+    <a href="/cart">장바구니 보기</a>
+
+    <script>
+    function addToCart(id) {
+        fetch('/add_to_cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const msg = new SpeechSynthesisUtterance('장바구니에 담았습니다.');
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+
+    window.onload = function() {
+        startVoiceRecognition();
+    }
+
+    function startVoiceRecognition() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert('이 브라우저는 음성인식을 지원하지 않습니다.');
+            return;
+        }
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.start();
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            const menu = JSON.parse('{{ menu|tojson|safe }}');
+
+            // 결제 명령
+            if (transcript.includes('결제')) {
+                window.location.href = '/cart';
+                const msg = new SpeechSynthesisUtterance('장바구니에서 결제 버튼을 눌러주세요.');
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+                return;
+            }
+            // 장바구니 보기 명령
+            if (transcript.includes('장바구니')) {
+                window.location.href = '/cart';
+                const msg = new SpeechSynthesisUtterance('장바구니로 이동합니다.');
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+                return;
+            }
+            // 메뉴 담기 명령
+            const found = menu.find(item => transcript.includes(item.name));
+            if(found) {
+                addToCart(found.id);
+                const msg = new SpeechSynthesisUtterance(found.name + '를 장바구니에 담았습니다.');
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+            } else {
+                alert('인식된 메뉴가 없습니다: ' + transcript);
+                const msg = new SpeechSynthesisUtterance('인식된 메뉴가 없습니다. 다시 말씀해 주세요.');
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+            }
+        };
+        recognition.onerror = function(event) {
+            const msg = new SpeechSynthesisUtterance('음성인식에 실패했습니다. 다시 시도해 주세요.');
+            msg.lang = 'ko-KR';
+            window.speechSynthesis.speak(msg);
+        };
+    }
+    </script>
+</body>
+</html>
