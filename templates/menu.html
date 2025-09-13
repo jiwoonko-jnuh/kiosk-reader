@@ -97,9 +97,7 @@
         .then(res => res.json())
         .then(data => {
             if(data.success) {
-                const msg = new SpeechSynthesisUtterance('장바구니에 담았습니다.');
-                msg.lang = 'ko-KR';
-                window.speechSynthesis.speak(msg);
+               startVoiceRecognition();
 
             } else {
                 alert(data.message);
@@ -122,21 +120,21 @@
         recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
             const menu = JSON.parse('{{ menu|tojson|safe }}');
-
+            console.log('인식된 음성:', transcript);
             // 결제 명령
             if (transcript.includes('결제')) {
                 window.location.href = '/cart';
-                const msg = new SpeechSynthesisUtterance('장바구니에서 결제 버튼을 눌러주세요.');
+                const msg = new SpeechSynthesisUtterance('장바구니에서 결제 버튼을 눌러주세요.'); // 택스트 수정필요
                 msg.lang = 'ko-KR';
                 window.speechSynthesis.speak(msg);
                 return;
             }
             // 장바구니 보기
             if (transcript.includes('장바구니') || transcript.includes('카트') || transcript.includes('내역') || transcript.includes('주문내역')) {
-                window.location.href = '/cart';
                 const msg = new SpeechSynthesisUtterance('장바구니로 이동합니다.');
                 msg.lang = 'ko-KR';
                 window.speechSynthesis.speak(msg);
+                window.location.href = '/cart';
                 return;
             }
 
@@ -147,6 +145,8 @@
                 const msg = new SpeechSynthesisUtterance(found.name + '를 장바구니에 담았습니다.');
                 msg.lang = 'ko-KR';
                 window.speechSynthesis.speak(msg);
+                startVoiceRecognition();
+                
             } else {
                 //chatGPT api로 잘못된 발음 교정 / 메뉴 추천
                 const message = [
@@ -190,9 +190,11 @@
             }
         };
         recognition.onerror = function(event) {
-            const msg = new SpeechSynthesisUtterance('음성인식에 실패했습니다. 다시 시도해 주세요.');
+            const msg = new SpeechSynthesisUtterance('다시 말씀해 주세요.');
             msg.lang = 'ko-KR';
             window.speechSynthesis.speak(msg);
+            window.location.href = '/'
+            
         };
     }
     </script>

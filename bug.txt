@@ -1,0 +1,10 @@
+주문내역에 여러개 있는 경우 맨 위의 메뉴만 말해주는 문제 
+~원 입니다(가격) 말하지않음 : Uncaught SyntaxError: Identifier 'msg' has already been declared
+
+~가 추가되었습니다-> 일부 조건에서만 발생
+
+마이크 입력 없으면 / 한번 음성인식하면 자동으로 꺼짐(계속 말할수있게 루프)
+
+장바구니 담기 누르면 다시 말씀해주세요 출력됨
+
+jinja2.exceptions.UndefinedError: 'item' is undefined
