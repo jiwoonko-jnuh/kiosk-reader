@@ -65,9 +65,10 @@
     {% if cart and cart|length > 0 %}
         {% for item in cart %}
         <div class="cart-item">
-            <span>{{ item.name }} : ({{ item.price }}원)</span>
+            <span>{{ item.name }} : {{ item.price }}원</span>
         </div>
         {% endfor %}
+        <br><br>
         <p>총액: {{ cart|sum(attribute="price") }}원</p>
         <br>
         <h3>결제가 완료되었습니다.</h3>
