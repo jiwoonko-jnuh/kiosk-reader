@@ -7,9 +7,9 @@ app.secret_key = 'your_secret_key'  # 세션용
 MENU = [
 	{'id': 1, 'name': '아메리카노', 'price': 3000},
 	{'id': 2, 'name': '카페라떼', 'price': 3500},
-	{'id': 3, 'name': '녹차', 'price': 3200},
-	{'id': 4, 'name': '샌드위치', 'price': 4500},
-	{'id': 5, 'name': '', 'price': 0}
+	{'id': 3, 'name': '샌드위치', 'price': 4500},
+	{'id': 4, 'name': '단백질쉐이크', 'price': 3000},
+	{'id': 5, 'name': '에너지드링크', 'price': 4000}
 ]
 
 @app.route('/')
@@ -34,6 +34,7 @@ def add_to_cart():
 @app.route('/cart')
 def cart():
 	cart = session.get('cart', [])
+
 	return render_template('cart.html', cart=cart)
 
 @app.route('/checksout', methods=['POST'])

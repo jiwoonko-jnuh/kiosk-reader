@@ -4,8 +4,71 @@
     <meta charset="UTF-8">
     <title>장바구니</title>
     <style>
-        body { font-size: 1.2em; }
-        .cart-item { margin: 10px 0; }
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background: #f7f7f7;
+            color: #222;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 480px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 24px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 32px;
+            color: #1976d2;
+        }
+        #cart-list {
+            margin-bottom: 32px;
+        }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+        }
+        .cart-item span {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .checkout-btn {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 16px;
+        }
+        .checkout-btn:hover {
+            background: #1565c0;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -16,14 +79,18 @@
             {% for item in cart %}
             <div class="cart-item">
                 <script>
-                    const msg = new SpeechSynthesisUtterance('{{ item.name}}')
+                    const msg = new SpeechSynthesisUtterance('{{ item.name }}')
                     msg.lang = 'ko-KR';
                     window.speechSynthesis.speak(msg);
                 </script>
-                <span>{{ item.name }} : ({{ item.price }}원)</span>
+                <span>{{ item.name }} : {{ item.price }}원</span>
+                <br>
+                
             </div>
             {% endfor %}
-            <p>총액: {{ cart|sum(attribute='price') }}원</p>
+            <div class="cart-item">
+                <strong><span>총액: {{ cart|sum(attribute="price") }}원</span></strong>
+            </div>
             <script>
                 const msg = new SpeechSynthesisUtterance('{{ cart|sum(attribute="price") }}원입니다. ')
                 msg.lang = 'ko-KR';
@@ -60,7 +127,7 @@
                 }
             </script>
             <form id="checkout-form" method="post" action="/checksout">
-                <button type="submit">결제하기</button>
+                <button class="checkout-btn" type="submit">결제하기</button>
             </form>
         {% else %}
             <p>장바구니가 비어 있습니다.</p>
