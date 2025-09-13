@@ -9,6 +9,7 @@ MENU = [
 	{'id': 2, 'name': '카페라떼', 'price': 3500},
 	{'id': 3, 'name': '녹차', 'price': 3200},
 	{'id': 4, 'name': '샌드위치', 'price': 4500},
+	{'id': 5, 'name': '', 'price': 0}
 ]
 
 @app.route('/')
@@ -35,10 +36,11 @@ def cart():
 	cart = session.get('cart', [])
 	return render_template('cart.html', cart=cart)
 
-@app.route('/checkout', methods=['POST'])
+@app.route('/checksout', methods=['POST'])
 def checkout():
-	session.pop('cart', None)
-	return jsonify({'success': True})
+	cart = session.get('cart', [])
+	session.pop('cart', None)  
+	return render_template('complete.html', cart=cart)
 
 if __name__ == '__main__':
 	app.run(debug=True)

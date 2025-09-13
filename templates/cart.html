@@ -11,14 +11,55 @@
 <body>
     <h1>장바구니</h1>
     <div id="cart-list">
+
         {% if cart and cart|length > 0 %}
             {% for item in cart %}
             <div class="cart-item">
-                <span>{{ item.name }} ({{ item.price }}원)</span>
+                <script>
+                    const msg = new SpeechSynthesisUtterance('{{ item.name}}')
+                    msg.lang = 'ko-KR';
+                    window.speechSynthesis.speak(msg);
+                </script>
+                <span>{{ item.name }} : ({{ item.price }}원)</span>
             </div>
             {% endfor %}
             <p>총액: {{ cart|sum(attribute='price') }}원</p>
-            <form id="checkout-form" method="post" action="/checkout">
+            <script>
+                const msg = new SpeechSynthesisUtterance('{{ cart|sum(attribute="price") }}원입니다. ')
+                msg.lang = 'ko-KR';
+                window.speechSynthesis.speak(msg);
+            </script>
+            <script>
+                function startVoiceRecognition() {
+                    if (!('webkitSpeechRecognition' in window)) {
+                        alert('이 브라우저는 음성인식을 지원하지 않습니다.');
+                        return;
+                    }
+                    const recognition = new webkitSpeechRecognition();
+                    recognition.lang = 'ko-KR';
+                    recognition.start();
+                    recognition.onresult = function(event) {
+                        const transcript = event.results[0][0].transcript;
+
+                        if (transcript.includes('결제') || transcript.includes('주문')) {
+                            document.getElementById('cart-item').submit();
+                            const msg = new SpeechSynthesisUtterance('결제 페이지로 이동합니다.');
+                            msg.lang = 'ko-KR';
+                            window.speechSynthesis.speak(msg);
+                        } else if (transcript.includes('메뉴') || transcript.includes('처음') || transcript.includes('홈')) {
+                            window.location.href = '/';
+                            const msg = new SpeechSynthesisUtterance('메뉴 페이지로 이동합니다.');
+                            msg.lang = 'ko-KR';
+                            window.speechSynthesis.speak(msg);
+                        } else {
+                            const msg = new SpeechSynthesisUtterance('인식된 명령이 없습니다. 다시 말씀해 주세요.');
+                            msg.lang = 'ko-KR';
+                            window.speechSynthesis.speak(msg);
+                        }
+                    }
+                }
+            </script>
+            <form id="checkout-form" method="post" action="/checksout">
                 <button type="submit">결제하기</button>
             </form>
         {% else %}
